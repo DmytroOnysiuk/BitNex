@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BitNex</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        
+        <header class="top-bar" id="main-header">
+            <div class="avatar-container" onclick="openAvatarModal()">
+                <img id="user-avatar-img" src="https://cdn-icons-png.flaticon.com/512/4140/4140048.png" alt="user" class="user-avatar">
+            </div>
+            <div class="header-search" onclick="openSearchModal()">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <span class="search-placeholder">Search</span>
+            </div>
+            <div class="header-icons">
+                <div class="notification-icon" onclick="openNotificationsModal()">
+                    <i class="fa-regular fa-bell"></i>
+                    <span class="badge" id="notification-badge">0</span>
+                </div>
+            </div>
+        </header>
+
+        <main id="home-view" class="view active">
+            <div class="balance-section-wrapper">
+                <div class="balance-content">
+                    <div class="balance-header">
+                        <span>Total Assets</span>
+                        <i class="fa-regular fa-eye"></i>
+                    </div>
+                    <div class="balance-amount-row">
+                        <span id="main-balance">0.00</span>
+                        <span class="currency-label">USD</span>
+                        <i class="fa-solid fa-caret-down dropdown-icon"></i>
+                    </div>
+                    <div id="pnl-display" class="pnl-row">
+                        Today's P&L +0.00 USD (+0.00%)
+                    </div>
+                </div>
+                <button class="deposit-main-btn" onclick="addTestFunds()">Deposit</button>
+            </div>
+
+            <div class="quick-menu-grid">
+                <div class="menu-item" onclick="openSwapModal()">
+                    <div class="menu-icon-circle"><i class="fa-solid fa-arrows-rotate"></i></div>
+                    <span>Swap</span>
+                </div>
+                <div class="menu-item" onclick="showFeatureAlert('Airdrop')">
+                    <div class="menu-icon-circle"><i class="fa-solid fa-parachute-box"></i></div>
+                    <span>Airdrop</span>
+                </div>
+                <div class="menu-item" onclick="showFeatureAlert('Settings')">
+                    <div class="menu-icon-circle"><i class="fa-solid fa-gear"></i></div>
+                    <span>Settings</span>
+                </div>
+            </div>
+
+            <div class="banner-slider-container">
+                <div class="banner-track" id="news-track"></div>
+                <div class="slider-dots" id="slider-dots"></div>
+            </div>
+
+            <div class="market-tabs-container">
+                <div class="market-tabs">
+                    <button class="filter-btn active" onclick="filterHomeData('popular', this)">Popular</button>
+                    <button class="filter-btn" onclick="filterHomeData('favorites', this)">Favorites</button>
+                    <button class="filter-btn" onclick="filterHomeData('gainers', this)">Gainers</button>
+                    <button class="filter-btn" onclick="filterHomeData('losers', this)">Losers</button>
+                    <button class="filter-btn" onclick="filterHomeData('mcap', this)">MCap</button>
+                </div>
+            </div>
+
+            <div class="list-header">
+                <span class="header-name">Name</span>
+                <div class="header-right">
+                    <span class="header-col-price">Last Price</span>
+                    <span class="header-col-change">24h Chg%</span>
+                </div>
+            </div>
+
+            <div id="home-market-list" class="assets-grid"></div>
+        </main>
+
+        <main id="trade-view" class="view">
+            <div class="page-header"><h2>Spot Market</h2></div>
+            <div class="list-header">
+                <span class="header-name">Name</span>
+                <div class="header-right">
+                    <span class="header-col-price">Price</span>
+                    <span class="header-col-change">Chg%</span>
+                </div>
+            </div>
+            <div id="spot-list" class="assets-grid"></div>
+        </main>
+
+        <!-- SPOT DETAIL VIEW - КОПІЯ FUTURES -->
+        <main id="spot-detail-view" class="view">
+            <div class="futures-detail-header">
+                <button class="back-btn" onclick="backToSpotList()">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <img id="spot-detail-coin-logo" src="" class="detail-coin-logo" alt="">
+                <div class="detail-info">
+                    <div class="symbol-row">
+                        <span id="spot-detail-symbol">BTC/USDT</span>
+                        <span class="detail-type">Spot</span>
+                    </div>
+                </div>
+                <button class="star-btn" id="spot-detail-star-btn" onclick="toggleSpotDetailFavorite()">
+                    <i class="fa-regular fa-star"></i>
+                </button>
+            </div>
+
+            <div class="price-section">
+                <div class="price-left">
+                    <span class="mark-label">Price</span>
+                    <div class="price-main" id="spot-detail-mark-price">0.00</div>
+                    <div class="price-change" id="spot-detail-price-change">+0.00 (+0.00%) in 24h</div>
+                </div>
+                
+                <div class="price-right">
+                    <div class="stat-row">
+                        <span class="stat-label">Last trade</span>
+                        <span class="stat-value" id="spot-detail-last-trade">0.00</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">24h high</span>
+                        <span class="stat-value" id="spot-detail-24h-high">0.00</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">24h vol</span>
+                        <span class="stat-value" id="spot-detail-24h-volume">0.0K</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeframe-buttons">
+                <button class="tf-btn" onclick="changeSpotTF('1', this)">1m</button>
+                <button class="tf-btn" onclick="changeSpotTF('5', this)">5m</button>
+                <button class="tf-btn" onclick="changeSpotTF('15', this)">15m</button>
+                <button class="tf-btn" onclick="changeSpotTF('60', this)">1h</button>
+                <button class="tf-btn" onclick="changeSpotTF('240', this)">4h</button>
+                <button class="tf-btn active" onclick="changeSpotTF('D', this)">1d</button>
+                <div class="chart-type-btns">
+                    <button class="chart-type-btn active" onclick="changeSpotChartStyle('candles', this)">
+                        <i class="fa-solid fa-chart-column"></i>
+                    </button>
+                    <button class="chart-type-btn" onclick="changeSpotChartStyle('line', this)">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="tradingview-container">
+                <div id="spot_tradingview_chart"></div>
+            </div>
+
+            <div class="trade-buttons">
+                <button class="long-btn" onclick="openSpotTradeModal('BUY')">Buy</button>
+                <button class="short-btn" onclick="openSpotTradeModal('SELL')">Sell</button>
+            </div>
+        </main>
+
+        <main id="futures-view" class="view">
+            <div class="futures-search-container">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="futures-search" placeholder="Search" oninput="searchFutures(this.value)">
+                </div>
+            </div>
+            
+            <div id="positions-list" class="positions-list"></div>
+            <h3 class="section-title">Perpetual Contracts</h3>
+            <div id="futures-list" class="assets-grid"></div>
+        </main>
+
+        <main id="futures-detail-view" class="view">
+            <div class="futures-detail-header">
+                <button class="back-btn" onclick="backToFuturesList()">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <img id="detail-coin-logo" src="" class="detail-coin-logo" alt="">
+                <div class="detail-info">
+                    <div class="symbol-row">
+                        <span id="detail-symbol">BTC/USDT</span>
+                        <span class="detail-type">Perpetual</span>
+                    </div>
+                </div>
+                <button class="star-btn" id="detail-star-btn" onclick="toggleDetailFavorite()">
+                    <i class="fa-regular fa-star"></i>
+                </button>
+            </div>
+
+            <div class="price-section">
+                <div class="price-left">
+                    <span class="mark-label">Mark price <i class="fa-solid fa-arrow-down" style="font-size: 10px;"></i></span>
+                    <div class="price-main" id="detail-mark-price">0.00</div>
+                    <div class="price-change" id="detail-price-change">+0.00 (+0.00%) in 24h</div>
+                </div>
+                
+                <div class="price-right">
+                    <div class="stat-row">
+                        <span class="stat-label">Last trade</span>
+                        <span class="stat-value" id="detail-last-trade">0.00</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">24h high</span>
+                        <span class="stat-value" id="detail-24h-high">0.00</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">24h vol</span>
+                        <span class="stat-value" id="detail-24h-volume">0.0K</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeframe-buttons">
+                <button class="tf-btn" onclick="changeTF('1', this)">1m</button>
+                <button class="tf-btn" onclick="changeTF('5', this)">5m</button>
+                <button class="tf-btn" onclick="changeTF('15', this)">15m</button>
+                <button class="tf-btn" onclick="changeTF('60', this)">1h</button>
+                <button class="tf-btn" onclick="changeTF('240', this)">4h</button>
+                <button class="tf-btn active" onclick="changeTF('D', this)">1d</button>
+                <div class="chart-type-btns">
+                    <button class="chart-type-btn active" onclick="changeChartStyle('candles', this)">
+                        <i class="fa-solid fa-chart-column"></i>
+                    </button>
+                    <button class="chart-type-btn" onclick="changeChartStyle('line', this)">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="tradingview-container">
+                <div id="tradingview_chart"></div>
+            </div>
+
+            <div class="trade-buttons">
+                <button class="long-btn" onclick="openTradeModal('LONG')">Long</button>
+                <button class="short-btn" onclick="openTradeModal('SHORT')">Short</button>
+            </div>
+        </main>
+
+        <main id="assets-view" class="view">
+            <div class="page-header"><h2>Overview</h2></div>
+        </main>
+
+        <nav class="bottom-nav">
+            <div class="nav-item active" onclick="switchTab('home')">
+                <i class="fa-solid fa-house"></i>
+                <span>Home</span>
+            </div>
+            <div class="nav-item" onclick="switchTab('trade')">
+                <i class="fa-solid fa-chart-simple"></i>
+                <span>Spot</span>
+            </div>
+            <div class="nav-item" onclick="switchTab('futures')">
+                <i class="fa-solid fa-rocket"></i>
+                <span>Futures</span>
+            </div>
+            <div class="nav-item" onclick="switchTab('assets')">
+                <i class="fa-solid fa-wallet"></i>
+                <span>Assets</span>
+            </div>
+        </nav>
+    </div>
+
+    <div id="trade-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">BTC/USDT Perpetual</h2>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            
+            <div class="trade-mode-buttons">
+                <button class="mode-btn active" id="trade-mode-btn" onclick="toggleModeMenu()">Market <i class="fa-solid fa-chevron-down"></i></button>
+                <button class="mode-btn-icon" id="tpsl-btn" onclick="toggleTPSL()">+ TP / SL</button>
+                <button class="mode-btn-icon" id="leverage-display" onclick="toggleLeverageModal()">20x <i class="fa-solid fa-chevron-down"></i></button>
+            </div>
+            
+            <div class="margin-mode-section">
+                <button class="margin-mode-btn active" id="cross-btn" onclick="setMarginMode('cross', this)">Cross</button>
+                <button class="margin-mode-btn" id="isolated-btn" onclick="setMarginMode('isolated', this)">Isolated</button>
+            </div>
+            
+            <div id="limit-price-section" style="display: none; margin-bottom: 16px; padding: 0 6px;">
+                <div class="limit-price-row">
+                    <label>Price (USDT)</label>
+                    <input type="number" id="limit-price" class="amount-input" placeholder="0.0">
+                </div>
+            </div>
+            
+            <div id="tpsl-section" style="display: none; margin-bottom: 16px; padding: 0 6px;">
+                <div class="tpsl-row">
+                    <label>Take Profit ($)</label>
+                    <input type="number" id="tp-price" class="tpsl-input" placeholder="0.0">
+                </div>
+                <div class="tpsl-row">
+                    <label>Stop Loss ($)</label>
+                    <input type="number" id="sl-price" class="tpsl-input" placeholder="0.0">
+                </div>
+            </div>
+            
+            <div class="amount-section">
+                <div class="amount-header">
+                    <span class="amount-label">Amount (USDT)</span>
+                    <div class="currency-toggle">
+                        <button class="currency-btn active" style="pointer-events: none;">USDT</button>
+                    </div>
+                </div>
+                <input type="number" id="trade-amount" class="amount-input" placeholder="0.0">
+            </div>
+            
+            <div class="trading-info">
+                <div class="info-row">
+                    <span class="info-label">Max size:</span>
+                    <span class="info-value" id="max-size">0 USDT</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Avbl margin:</span>
+                    <span class="info-value" id="avbl-margin">0 USDT</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Liq. price:</span>
+                    <span class="info-value" id="liq-price">--</span>
+                </div>
+            </div>
+            
+            <button class="details-btn" onclick="toggleDetails()">
+                Details
+                <span class="fee-text">Fee: 0.08%</span>
+            </button>
+            
+            <div class="modal-trade-buttons">
+                <button class="btn-long" onclick="executeFutures('LONG')" id="modal-long-btn">Open Long</button>
+                <button class="btn-short" onclick="executeFutures('SHORT')" id="modal-short-btn">Open Short</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="leverage-modal" class="modal" style="display: none;">
+        <div class="modal-content leverage-modal-content">
+            <div class="modal-header">
+                <h2>Leverage</h2>
+                <button class="close-btn" onclick="closeLeverageModal()">×</button>
+            </div>
+            <div class="leverage-control">
+                <div class="leverage-display-big">
+                    <span id="leverage-val-big">x20</span>
+                </div>
+                <input type="range" id="leverage-slider" min="1" max="100" value="20" oninput="updateLeverage(this.value)">
+                <div class="leverage-marks">
+                    <span>1x</span>
+                    <span>25x</span>
+                    <span>50x</span>
+                    <span>75x</span>
+                    <span>100x</span>
+                </div>
+            </div>
+            <button class="confirm-btn" onclick="confirmLeverage()">Confirm</button>
+        </div>
+    </div>
+
+    <div id="tpsl-edit-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Set TP/SL</h2>
+                <button class="close-btn" onclick="closeTPModal()">×</button>
+            </div>
+            <div id="tpsl-edit-section" style="margin-bottom: 20px;">
+                <div class="tpsl-row">
+                    <label>Take Profit (USDT)</label>
+                    <input type="number" id="edit-tp-input" class="amount-input" placeholder="0.0">
+                </div>
+                <div class="tpsl-row" style="margin-top: 16px;">
+                    <label>Stop Loss (USDT)</label>
+                    <input type="number" id="edit-sl-input" class="amount-input" placeholder="0.0">
+                </div>
+            </div>
+            <div class="modal-trade-buttons">
+                <button class="btn-long" onclick="saveTPSL()" style="width: 100%;">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SPOT TRADE MODAL -->
+    <div id="spot-trade-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="spot-modal-title">BTC/USDT Spot</h2>
+                <button class="close-btn" onclick="closeSpotTradeModal()">×</button>
+            </div>
+            
+            <!-- Market/Limit -->
+            <div class="trade-mode-buttons">
+                <button class="mode-btn active" id="spot-trade-mode-btn" onclick="toggleSpotModeMenu()">Market <i class="fa-solid fa-chevron-down"></i></button>
+            </div>
+            
+            <!-- Limit Price (hidden by default) -->
+            <div id="spot-limit-price-section" style="display: none; margin-bottom: 16px; padding: 0 6px;">
+                <div class="limit-price-row">
+                    <label>Price (USDT)</label>
+                    <input type="number" id="spot-limit-price" class="amount-input" placeholder="0.0">
+                </div>
+            </div>
+            
+            <!-- Amount input (USDT only) -->
+            <div class="amount-section">
+                <div class="amount-header">
+                    <span class="amount-label">Amount (USDT)</span>
+                </div>
+                <input type="number" id="spot-trade-amount" class="amount-input" placeholder="0.0" oninput="updateSpotExpectedOutput()">
+            </div>
+            
+            <!-- You get -->
+            <div class="trading-info">
+                <div class="info-row">
+                    <span class="info-label">Available:</span>
+                    <span class="info-value" id="spot-avbl-balance">0 USDT</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">You get:</span>
+                    <span class="info-value" id="spot-expected-output">0.00</span>
+                </div>
+            </div>
+            
+            <!-- Details button -->
+            <button class="details-btn">
+                Details
+                <span class="fee-text">Fee: 0.1%</span>
+            </button>
+            
+            <!-- Trade buttons -->
+            <div class="modal-trade-buttons">
+                <button class="btn-long" onclick="executeSpotTrade('BUY')" id="spot-modal-buy-btn">Buy</button>
+                <button class="btn-short" onclick="executeSpotTrade('SELL')" id="spot-modal-sell-btn">Sell</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="custom-alert" class="custom-alert-overlay">
+        <div class="custom-alert-box">
+            <div id="custom-alert-icon" class="custom-alert-icon"><i class="fa-solid fa-circle-info"></i></div>
+            <h3 id="custom-alert-title">Title</h3>
+            <p id="custom-alert-text">Message goes here...</p>
+            <button class="custom-alert-btn" onclick="closeCustomAlert()">OK</button>
+        </div>
+    </div>
+
+    <div id="custom-confirm" class="custom-alert-overlay">
+        <div class="custom-alert-box">
+            <div class="custom-alert-icon"><i class="fa-solid fa-circle-question"></i></div>
+            <h3 id="custom-confirm-title">Confirm</h3>
+            <p id="custom-confirm-text">Are you sure?</p>
+            <div class="custom-confirm-buttons">
+                <button class="custom-alert-btn btn-cancel" onclick="closeCustomConfirm()">Cancel</button>
+                <button class="custom-alert-btn btn-confirm" id="custom-confirm-ok">Yes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AVATAR MODAL -->
+    <div id="avatar-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-height: 85vh; overflow-y: auto; overflow-x: hidden;">
+            <div class="modal-header">
+                <h2>Choose Avatar</h2>
+                <button class="close-btn" onclick="closeAvatarModal()">×</button>
+            </div>
+            <div class="avatars-grid" id="avatars-grid"></div>
+        </div>
+    </div>
+
+    <!-- SEARCH MODAL -->
+    <div id="search-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-height: 80vh;">
+            <div class="modal-header">
+                <h2>Search Coins</h2>
+                <button class="close-btn" onclick="closeSearchModal()">×</button>
+            </div>
+            <div style="padding: 0 8px 20px 8px;">
+                <input type="text" id="coin-search-input" placeholder="Search BTC, ETH..." style="width: 100%; padding: 12px; background: #1E2026; border: 1px solid #333; border-radius: 8px; color: white; font-size: 15px; margin-bottom: 16px;" oninput="searchCoins(this.value)">
+                <div id="search-results-list" style="max-height: 400px; overflow-y: auto;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SWAP MODAL -->
+    <div id="swap-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="">
+            <div class="modal-header">
+                <h2>Swap</h2>
+                <button class="close-btn" onclick="closeSwapModal()">×</button>
+            </div>
+            <div style="padding: 0 8px 20px 8px;">
+                <!-- From -->
+                <div style="background: #1E2026; border-radius: 12px; padding: 16px; margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="font-size: 13px; color: #888;">From</span>
+                        <span style="font-size: 13px; color: #888;">Balance: <span id="swap-from-balance">0.00</span></span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 8px; min-width: 100px; cursor: pointer;" onclick="openSwapCoinSelector('from')">
+                            <img id="swap-from-logo" src="" style="width: 28px; height: 28px; border-radius: 50%;" alt="">
+                            <span id="swap-from-coin-text" style="color: white; font-size: 16px; font-weight: 600;">USDT</span>
+                            <i class="fa-solid fa-chevron-down" style="color: #888; font-size: 12px;"></i>
+                        </div>
+                        <input type="number" inputmode="decimal" id="swap-from-amount" placeholder="0.0" style="flex: 1; background: transparent; border: none; color: white; font-size: 24px; font-weight: 600; text-align: right; outline: none; min-width: 0;" oninput="calculateSwapOutput()">
+                    </div>
+                    <!-- MAX button -->
+                    <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+                        <button onclick="setSwapMaxAmount()" style="background: rgba(240,185,11,0.15); border: 1px solid rgba(240,185,11,0.4); color: var(--accent); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 6px; cursor: pointer; letter-spacing: 0.5px;">MAX</button>
+                    </div>
+                </div>
+
+                <!-- Swap Icon -->
+                <div style="text-align: center; margin: 10px 0;">
+                    <div style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #2a2e37; border-radius: 50%; cursor: pointer;" onclick="swapCoinDirections()">
+                        <i class="fa-solid fa-arrows-up-down" style="color: var(--accent);"></i>
+                    </div>
+                </div>
+
+                <!-- To -->
+                <div style="background: #1E2026; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="font-size: 13px; color: #888;">To</span>
+                        <span style="font-size: 13px; color: #888;">Balance: <span id="swap-to-balance">0.00</span></span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 8px; min-width: 100px; cursor: pointer;" onclick="openSwapCoinSelector('to')">
+                            <img id="swap-to-logo" src="" style="width: 28px; height: 28px; border-radius: 50%;" alt="">
+                            <span id="swap-to-coin-text" style="color: white; font-size: 16px; font-weight: 600;">BTC</span>
+                            <i class="fa-solid fa-chevron-down" style="color: #888; font-size: 12px;"></i>
+                        </div>
+                        <input type="text" id="swap-to-amount" placeholder="0.0" readonly style="flex: 1; background: transparent; border: none; color: white; font-size: 24px; font-weight: 600; text-align: right; outline: none; min-width: 0;">
+                    </div>
+                </div>
+
+                <!-- Info -->
+                <div style="background: #1a1a1a; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="font-size: 13px; color: #888;">Rate</span>
+                        <span style="font-size: 13px; color: #fff;" id="swap-rate">1 USDT = 0 BTC</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="font-size: 13px; color: #888;">Fee</span>
+                        <span style="font-size: 13px; color: var(--green);">0.1%</span>
+                    </div>
+                </div>
+
+                <!-- Swap Button -->
+                <button id="swap-execute-btn" style="width: 100%; background: var(--accent); color: #000; border: none; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer;" onclick="executeSwap()">
+                    Swap
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SWAP COIN SELECTOR MODAL -->
+    <div id="swap-coin-selector-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-height: 85vh; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <h2 id="swap-selector-title">Select Coin</h2>
+                <button class="close-btn" onclick="closeSwapCoinSelector()">×</button>
+            </div>
+            
+            <!-- Search -->
+            <div style="padding: 0 8px 16px 8px;">
+                <div class="search-box" style="margin: 0;">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="swap-coin-search" placeholder="Search" oninput="filterSwapCoins()" style="background: transparent; border: none; color: white; flex: 1; outline: none;">
+                </div>
+            </div>
+        
+            <!-- Tabs (only shown for "To" selector) -->
+            <div id="swap-tabs-row" style="display: flex; gap: 20px; padding: 0 8px 12px 8px; border-bottom: 1px solid #2a2e37;">
+                <button class="swap-tab active" onclick="switchSwapTab('all', this)" style="background: none; border: none; color: #888; font-size: 14px; font-weight: 600; cursor: pointer; padding: 0 0 8px 0; border-bottom: 2px solid transparent;">
+                    All
+                </button>
+                <button class="swap-tab" onclick="switchSwapTab('holdings', this)" style="background: none; border: none; color: #888; font-size: 14px; font-weight: 600; cursor: pointer; padding: 0 0 8px 0; border-bottom: 2px solid transparent;">
+                    Holdings
+                </button>
+            </div>
+            
+            <!-- Coins List -->
+            <div id="swap-coins-list" style="flex: 1; overflow-y: auto; padding: 12px 8px;"></div>
+        </div>
+    </div>
+
+    <!-- NOTIFICATIONS MODAL -->
+    <div id="notifications-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-height: 85vh;">
+            <div class="modal-header">
+                <h2>Notifications</h2>
+                <button class="close-btn" onclick="closeNotificationsModal()">×</button>
+            </div>
+            <div style="padding: 0 8px 20px 8px;">
+                <div id="notifications-list" style="max-height: 500px; overflow-y: auto;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SWAP SUCCESS MODAL -->
+    <div id="swap-success-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 9999; align-items: center; justify-content: center;">
+        <div style="background: #1E2026; border-radius: 20px; padding: 36px 28px; width: 90%; text-align: center; animation: slideUp 0.3s ease;">
+            <!-- Checkmark circle -->
+            <div style="width: 72px; height: 72px; border-radius: 50%; background: rgba(46,189,133,0.15); border: 2px solid #2EBD85; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto;">
+                <i class="fa-solid fa-check" style="color: #2EBD85; font-size: 30px;"></i>
+            </div>
+            <div style="font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 8px;">Swap Successful!</div>
+            <div style="font-size: 14px; color: #888; margin-bottom: 24px;">Your transaction has been completed</div>
+
+            <!-- From → To -->
+            <div style="background: #13151a; border-radius: 14px; padding: 16px; margin-bottom: 24px;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 12px;">
+                    <div style="text-align: center;">
+                        <img id="ss-from-logo" src="" style="width: 36px; height: 36px; border-radius: 50%; margin-bottom: 6px;" alt="">
+                        <div style="font-size: 13px; color: #aaa;" id="ss-from-label">0.00 USDT</div>
+                    </div>
+                    <div style="color: #F0B90B; font-size: 20px; margin-bottom: 6px;">→</div>
+                    <div style="text-align: center;">
+                        <img id="ss-to-logo" src="" style="width: 36px; height: 36px; border-radius: 50%; margin-bottom: 6px;" alt="">
+                        <div style="font-size: 13px; color: #aaa;" id="ss-to-label">0.00 BTC</div>
+                    </div>
+                </div>
+                <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid #2a2e37; display: flex; justify-content: space-between;">
+                    <span style="font-size: 12px; color: #666;">Rate</span>
+                    <span style="font-size: 12px; color: #aaa;" id="ss-rate">—</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 6px;">
+                    <span style="font-size: 12px; color: #666;">Fee</span>
+                    <span style="font-size: 12px; color: #2EBD85;">0.1%</span>
+                </div>
+            </div>
+
+            <button onclick="closeSwapSuccessModal()" style="width: 100%; background: var(--accent); color: #000; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer;">Done</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
